@@ -5,18 +5,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Intents necessários
 intents = discord.Intents.default()
 intents.message_content = True
 intents.voice_states = True
 intents.guilds = True
 intents.members = True
 
-# Prefixo e inicialização do bot
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# ID do canal de voz
-VOICE_CHANNEL_ID = 123456789012345678  # Substitua com o ID real do seu canal
+VOICE_CHANNEL_ID = 1359032707379630191  # ID do canal de voz
 
 @bot.event
 async def on_ready():
@@ -26,9 +23,35 @@ async def on_ready():
         if channel:
             try:
                 await channel.connect()
-                print(f"🎧 Conectado automaticamente no canal: {channel.name}")
-            except:
-                print("⚠️ Já conectado ou falha ao conectar.")
+                print(f"🎧 Conectado automaticamente ao canal: {channel.name}")
+            except Exception as e:
+                print(f"⚠️ Falha ao conectar automaticamente: {e}")
+
+@bot.command(name="join")
+async def join(ctx):
+    if ctx.author.voice:
+        channel = ctx.author.voice.channel
+        if ctx.voice_client:
+            await ctx.voice_client.move_to(channel)
+        else:
+            await channel.connect()
+        await ctx.send(f"✅ Entrei no canal: {channel.name}")
+    else:
+        await ctx.send("❌ Você precisa estar em um canal de voz para usar este comando.")
+
+@bot.command(name="forcejoin")
+@commands.has_permissions(administrator=True)
+async def forcejoin(ctx):
+    guild = ctx.guild
+    channel = guild.get_channel(VOICE_CHANNEL_ID)
+    if channel:
+        if ctx.voice_client:
+            await ctx.voice_client.move_to(channel)
+        else:
+            await channel.connect()
+        await ctx.send(f"✅ Conectado ao canal de voz: {channel.name}")
+    else:
+        await ctx.send("❌ Canal não encontrado.")
 
 @bot.command(name="leave")
 async def leave(ctx):
@@ -53,18 +76,5 @@ async def unmute(ctx):
         await ctx.send("🔊 Bot desmutado.")
     else:
         await ctx.send("❌ Não estou em um canal de voz.")
-
-@bot.command(name="forcejoin")
-@commands.has_permissions(administrator=True)
-async def forcejoin(ctx):
-    channel = ctx.guild.get_channel(VOICE_CHANNEL_ID)
-    if channel:
-        if ctx.voice_client is not None:
-            await ctx.voice_client.move_to(channel)
-        else:
-            await channel.connect()
-        await ctx.send(f"✅ Conectado ao canal de voz: {channel.name}")
-    else:
-        await ctx.send("❌ Canal não encontrado.")
 
 bot.run(os.getenv("DISCORD_TOKEN"))
