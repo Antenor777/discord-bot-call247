@@ -5,18 +5,30 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Intents necessários
 intents = discord.Intents.default()
 intents.message_content = True
 intents.voice_states = True
 intents.guilds = True
+intents.members = True
 
-# Prefixo e inicialização do bot
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+# ID do canal de voz onde o bot deve sempre entrar
+VOICE_CHANNEL_ID = 123456789012345678  # <--- substitua pelo ID do seu canal
 
 @bot.event
 async def on_ready():
     print(f'✅ Bot conectado como {bot.user}')
+
+    # Tenta conectar no canal de voz automaticamente
+    for guild in bot.guilds:
+        channel = guild.get_channel(1359032707379630191)
+        if channel:
+            try:
+                await channel.connect()
+                print(f"🎧 Conectado automaticamente no canal: {channel.name}")
+            except Exception as e:
+                print(f"❌ Erro ao conectar no canal de voz: {e}")
 
 @bot.command(name="join")
 async def join(ctx):
@@ -43,19 +55,34 @@ async def leave(ctx):
 
 @bot.command(name="mute")
 async def mute(ctx):
-    if ctx.voice_client and ctx.voice_client.is_connected():
-        await ctx.guild.me.edit(mute=True)
-        await ctx.send("🔇 Me mutei no canal de voz.")
+    if ctx.voice_client:
+        await ctx.guild.change_voice_state(channel=ctx.voice_client.channel, self_mute=True)
+        await ctx.send("🔇 Bot mutado.")
     else:
-        await ctx.send("❌ Não estou em um canal de voz.")
+        await ctx.send("❌ O bot não está em call.")
 
 @bot.command(name="unmute")
 async def unmute(ctx):
-    if ctx.voice_client and ctx.voice_client.is_connected():
-        await ctx.guild.me.edit(mute=False)
-        await ctx.send("🔊 Me desmutei no canal de voz.")
+    if ctx.voice_client:
+        await ctx.guild.change_voice_state(channel=ctx.voice_client.channel, self_mute=False)
+        await ctx.send("🔊 Bot desmutado.")
     else:
-        await ctx.send("❌ Não estou em um canal de voz.")
+        await ctx.send("❌ O bot não está em call.")
 
-# Inicia o bot com o token do arquivo .env
+# Se for desconectado da call, tenta voltar
+@bot.event
+async def on_voice_state_update(member, before, after):
+    if member.id != bot.user.id:
+        return
+
+    if before.channel and after.channel is None:
+        channel = member.guild.get_channel(VOICE_CHANNEL_ID)
+        if channel:
+            try:
+                await channel.connect()
+                print(f"🔁 Bot reconectado automaticamente ao canal: {channel.name}")
+            except Exception as e:
+                print(f"❌ Erro ao reconectar: {e}")
+
+# Inicia o bot
 bot.run(os.getenv("DISCORD_TOKEN"))
