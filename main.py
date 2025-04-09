@@ -5,15 +5,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Intents necessários
 intents = discord.Intents.default()
 intents.message_content = True
 intents.voice_states = True
 intents.guilds = True
 intents.members = True
 
+# Prefixo e inicialização do bot
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-VOICE_CHANNEL_ID = 123456789012345678  # Substituído pelo seu ID real
+# ID do canal de voz
+VOICE_CHANNEL_ID = 123456789012345678  # Substitua com o ID real do seu canal
 
 @bot.event
 async def on_ready():
@@ -23,21 +26,9 @@ async def on_ready():
         if channel:
             try:
                 await channel.connect()
-                print(f"🎧 Conectado automaticamente ao canal: {channel.name}")
+                print(f"🎧 Conectado automaticamente no canal: {channel.name}")
             except:
                 print("⚠️ Já conectado ou falha ao conectar.")
-
-@bot.command(name="join")
-async def join(ctx):
-    if ctx.author.voice:
-        channel = ctx.author.voice.channel
-        if ctx.voice_client is None:
-            await channel.connect()
-        else:
-            await ctx.voice_client.move_to(channel)
-        await ctx.send(f"✅ Entrei no canal: {channel.name}")
-    else:
-        await ctx.send("❌ Você precisa estar em um canal de voz para usar este comando.")
 
 @bot.command(name="leave")
 async def leave(ctx):
@@ -49,19 +40,19 @@ async def leave(ctx):
 
 @bot.command(name="mute")
 async def mute(ctx):
-    if ctx.voice_client and ctx.voice_client.is_playing():
+    if ctx.voice_client:
         ctx.voice_client.pause()
         await ctx.send("🔇 Bot mutado.")
     else:
-        await ctx.send("❌ Nada está sendo reproduzido.")
+        await ctx.send("❌ Não estou em um canal de voz.")
 
 @bot.command(name="unmute")
 async def unmute(ctx):
-    if ctx.voice_client and ctx.voice_client.is_paused():
+    if ctx.voice_client:
         ctx.voice_client.resume()
         await ctx.send("🔊 Bot desmutado.")
     else:
-        await ctx.send("❌ Nada está pausado.")
+        await ctx.send("❌ Não estou em um canal de voz.")
 
 @bot.command(name="forcejoin")
 @commands.has_permissions(administrator=True)
