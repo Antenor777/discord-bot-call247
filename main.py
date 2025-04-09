@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 import os
-from keep_alive import keep_alive
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -57,9 +56,6 @@ async def unmute(ctx):
         await ctx.send("🔊 Me desmutei no canal de voz.")
     else:
         await ctx.send("❌ Não estou em um canal de voz.")
-
-# Inicia o servidor web para manter o bot online no Railway
-keep_alive()
 
 # Inicia o bot com o token do arquivo .env
 bot.run(os.getenv("DISCORD_TOKEN"))
